@@ -1,0 +1,26 @@
+{
+  "name": "guanyao",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "《观爻》赛博六爻起卦与排盘系统",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "lunar-javascript": "^1.7.7",
+    "pinia": "^2.3.1",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.8",
+    "vitest": "^1.6.0",
+    "vue-tsc": "^2.0.13"
+  }
+}
