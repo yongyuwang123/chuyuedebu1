@@ -4,7 +4,11 @@ import { useGuaStore } from './gua';
 
 // 状态机测试：把"信任边界"从算法层延伸到 UI 状态层（起卦→排盘闭环）
 describe('起卦状态机', () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  // 注意：必须用块体（返回 void），若写成 `() => setActivePinia(...)` 箭头直接返回 Pinia 实例，
+  // 会在 vue-tsc 类型检查时报 TS2322（Pinia 不能赋给钩子回调的返回类型），进而导致 CI 构建失败。
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
 
   it('摇满六爻后 isComplete，finalize 产出完整排盘与合法日干支', async () => {
     const s = useGuaStore();

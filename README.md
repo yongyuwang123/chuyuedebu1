@@ -351,32 +351,45 @@ scripts/gen-guas.mjs  # 数据生成器（可复现，杜绝手敲）
 **本地运行**
 ```bash
 npm install
-npm run dev      # 起卦界面（建议浏览器打开后点「摇卦」体验铜钱动画+音效）
-npm test         # 22 项 Vitest（核心 13 + 状态机 3 + 精确历法 6）
-npm run build    # vite build → dist/（lunar-javascript 拆为独立异步 chunk，主包仅 ~113KB）
+npm run dev        # 起卦界面（建议浏览器打开后点「摇卦」体验铜钱动画+音效）
+npm test           # 22 项 Vitest（核心 13 + 状态机 3 + 精确历法 6）
+npm run type-check # vue-tsc --noEmit，等价 CI 的类型门禁
+npm run build      # type-check + vite build → dist/（lunar-javascript 拆为独立异步 chunk，主包约 114KB）
 ```
 > 注：日干支与节气月建均由 `lunar-javascript` 精确计算（已安装为依赖）；若运行时加载失败，自动回退内置公式（日干支精确、月建为节气近似表）。
 
+**⚠️ 构建陷阱（改代码后务必看，否则本地"过"了 CI 却挂）**
+
+| 陷阱 | 症状 | 正确处理 |
+|---|---|---|
+| `lunar-javascript` 无类型声明 | strict 下 `import('lunar-javascript')` 报 **TS7016**：模块隐式 any，构建直接失败 | 已补 `src/types/lunar-javascript.d.ts` 最小声明；新增调用 API 时在该文件补签名 |
+| 测试钩子写成箭头直返 | `beforeEach(() => setActivePinia(...))` 报 **TS2322**（Pinia 不能赋给钩子回调返回类型） | 一律用**块体**：`beforeEach(() => { ... })`，不得让回调返回值 |
+| `vue-tsc -b` 增量缓存会"骗人" | 本地因 `.tsbuildinfo` 缓存跳过复检而报**构建通过**，干净环境（CI）一构建即暴露 | `build` 脚本已改为 **`vue-tsc --noEmit`**（无缓存、每次都全量类型检查）；`*.tsbuildinfo` 已加 gitignore |
+
+> 验证方式（等效 CI）：把仓库文件复制到空目录（**不带 node_modules**）→ `npm ci` → `npm run build`。本项目在干净目录下 type-check 0 错、构建 53 模块、22/22 测试通过。
+
+
 ## 十一、部署（Vercel 自动部署）
 
-仓库：`git@gitee.com:yongyuwang/chuyuedeliuyao.git`（分支 `master` 源码）。
+**代码仓库**
+- **主库（源）**：`git@gitee.com:yongyuwang/chuyuedeliuyao.git`（分支 `master`，日常在此提交，已公开）。
+- **部署源（镜像）**：GitHub `yongyuwang123/chuyuedebu1`（Vercel 从这里拉取构建）。
 
-**为什么用 Vercel**：纯前端静态站，Vercel 对 Vite 项目零配置识别，push 即自动构建+上线，免费且无需实名。它支持直接连 **Gitee 仓库**，因此**无需把代码搬到 GitHub**。
+**为什么借道 GitHub**：纯前端静态站，Vercel 对 Vite 零配置识别、push 即自动构建+上线、免费且无需实名。
+> ⚠️ 实测结论：**Vercel 原生不支持直连 Gitee**（Import 的 Git 源只有 GitHub / GitLab / Bitbucket + "Origin" 自建 Git，填不了 gitee.com）。因此必须先把代码弄到 GitHub。
 
 **一键部署步骤**
-1. 打开 https://vercel.com → 注册/登录（GitHub 或邮箱均可）。
-2. 点 **「Add New → Project」→ Import**，在 Git 源里选 **Gitee**（首次需授权，允许读取仓库）。
-3. 选中 `yongyuwang/chuyuedeliuyao` 仓库。
-4. Framework Preset 选 **Vite**（一般自动识别）；Build Command `npm run build`、Output Directory `dist` 默认即可（仓库根 `vercel.json` 已固化）。
-5. 点 **Deploy**，约 1 分钟给出 `https://<项目名>.vercel.app` 域名。
+1. **把 Gitee 代码搬到 GitHub**：因本机到 GitHub 的 HTTPS 链路受代理干扰，改用 GitHub 服务端拉取——打开 https://github.com/new/import ，clone URL 填 `https://gitee.com/yongyuwang/chuyuedeliuyao.git`（Gitee 需为**公开**仓库，否则会报用户名/密码错误），Repository name 填 `chuyuedebu1` → **Begin import**。
+2. 打开 https://vercel.com → 登录 → **Add New → Project**，Git 源选 **GitHub** → 授权 → 选 `chuyuedebu1`。
+3. 配置页保持：**Root Directory `./`**（源码在仓库根，改了会找不到 package.json）、**Application Preset `Vite`**（页面上标注 "Set by vercel.json"，说明根目录 `vercel.json` 已生效）；Build/Output 无需展开，`vercel.json` 已固化 `npm run build` + `dist`。
+4. 点 **Deploy**，约 1 分钟给出 `https://<项目名>.vercel.app`。首次部署记录：团队 `aaccmmee`（Hobby 免费版，2FA 引导页可跳过）。
 
-**之后的自动更新**：每次 `git push master` 到 Gitee，Vercel 自动重新构建部署（Production + Preview），真正零点击。
+**之后的自动更新**：每次 `git push` 到 **GitHub** `master`，Vercel 自动重新构建部署（Production + Preview），零点击。
 
 - `vite.config.ts` 的 `base: './'` 对 Vercel 根域名同样兼容，无需改动。
 - 自定义域名：Vercel 控制台 → Settings → Domains 可绑定（国内稳定访问需备案域名）。
-
 - 隐私：纯前端、数据不出本地，见 `PRIVACY.md`。
 
 ---
 
-> 文档版本：v2.7（部署方案由 Gitee Go 改为 Vercel：连 Gitee 仓库零点击自动部署；删除废弃 Jenkinsfile）｜ 状态：实现版
+> 文档版本：v2.8（修正部署事实：Vercel 不支持直连 Gitee，改为「Gitee 主库 → GitHub Import 镜像 → Vercel」；记录三处构建陷阱：lunar-javascript 缺类型 TS7016、测试钩子箭头直返 TS2322、vue-tsc -b 增量缓存假通过，build 改 `vue-tsc --noEmit`）｜ 状态：实现版
