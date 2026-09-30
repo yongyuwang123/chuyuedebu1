@@ -357,13 +357,22 @@ npm run build    # vite build → dist/（lunar-javascript 拆为独立异步 ch
 ```
 > 注：日干支与节气月建均由 `lunar-javascript` 精确计算（已安装为依赖）；若运行时加载失败，自动回退内置公式（日干支精确、月建为节气近似表）。
 
-## 十一、部署（Gitee Pages + Gitee Go）
+## 十一、部署（Gitee Pages + Gitee Go 自动部署）
 仓库：`git@gitee.com:yongyuwang/chuyuedeliuyao.git`（分支 `master` 源码 / `pages` 静态产物）。
 - **`base: './'`**：因 Gitee Pages 项目页地址带仓库名子路径（`https://yongyuwang.gitee.io/chuyuedeliuyao/`），必须用相对路径 base，否则 `/assets` 404。
-- **Gitee Pages**：Gitee 仓库「设置 → Pages」选 `pages` 分支、部署目录为根，开启即得访问地址。
-- **Gitee Go（CI）**：`Jenkinsfile` 已就位，仓库「DevOps → Gitee Go」开启并绑定即可；push `master` 自动跑 `npm install → npm test → npm run build`。构建节点需 **Node.js ≥ 18**。
+
+**Gitee Go 流水线（push 即自动构建+部署）**
+1. 仓库「DevOps → Gitee Go」开启，绑定本仓库与根目录 `Jenkinsfile`。
+2. **配置保密变量**：在 Gitee Go 流水线设置里加 Secret 变量 `GITEE_TOKEN` = 你的 Gitee 私人令牌（`https://gitee.com/profile/personal_access_tokens`，scope 勾 `projects`，用于回推 `pages` 分支）。
+3. 构建节点选 **Node.js ≥ 18**（推荐 20）。
+4. 之后 push `master` 自动跑：`npm install → npm test（22 项）→ npm run build → 推送 dist 到 pages 分支`。
+
+> ⚠️ **Gitee Pages 免费版硬限制（务必知悉）**：推完 `pages` 分支后，Gitee Pages **不会自动重新部署**，仍需到「设置 → Pages」**手动点一次「更新」**才生效（Gitee 免费 Pages 不支持 API 触发重建，会报「非付费 pages，不允许部署」）。`Jenkinsfile` 末段「发布到 Gitee Pages」阶段已尝试调用其构建 API——若你开通了**付费 Pages** 则会自动触发、零点击；免费版该步会优雅失败并提示手动点更新，不影响前面构建与推送。
+>
+> 想要**真正零点击**自动上线？两条路：① 升级 Gitee 付费 Pages（保留全 Gitee 工作流）；② 把代码镜像到 GitHub 再接 **Vercel**（Vercel 在 push 后自动部署，属行业标配）。
+
 - 隐私：纯前端、数据不出本地，见 `PRIVACY.md`。
 
 ---
 
-> 文档版本：v2.5.1（修复变卦爻线阴阳未翻转 bug + 补回归测试，Vitest 22 项 + vite build 通过；已推 Gitee 并配 Gitee Pages/Gitee Go 部署）｜ 状态：实现版
+> 文档版本：v2.6（接入 Gitee Go 自动部署流水线：测试→构建→推送 pages 分支；注明 Gitee Pages 免费版需手动点「更新」的硬限制）｜ 状态：实现版
