@@ -137,27 +137,26 @@ const wuxingColor: Record<string, string> = {
   height: 10px;
   width: 4.4rem;
   background: var(--c-xuanzhi);
+  position: relative;
+  border-radius: 1px;
 }
 .bar.yang {
-  /* 阳爻实条 */
+  /* 阳爻：一整条实横（━━━） */
   background: linear-gradient(90deg, var(--c-xuanzhi), #fff7e6);
 }
 .bar.yin {
-  /* 阴爻断条 */
+  /* 阴爻：左右两个短条，中间断开（━ ━） */
   background: transparent;
-  border-top: 5px solid var(--c-xuanzhi);
-  border-bottom: 5px solid var(--c-xuanzhi);
-  height: 0;
-  position: relative;
 }
 .bar.yin::before,
 .bar.yin::after {
   content: '';
   position: absolute;
-  top: -5px;
+  top: 0;
   height: 10px;
-  width: 1.9rem;
+  width: 1.8rem;
   background: var(--c-xuanzhi);
+  border-radius: 1px;
 }
 .bar.yin::before {
   left: 0;
@@ -165,11 +164,8 @@ const wuxingColor: Record<string, string> = {
 .bar.yin::after {
   right: 0;
 }
-.yao.dong .bar {
+.yao.dong .bar.yang {
   background: var(--c-zhusha);
-}
-.yao.dong .bar.yin {
-  border-color: var(--c-zhusha);
 }
 .yao.dong .bar.yin::before,
 .yao.dong .bar.yin::after {

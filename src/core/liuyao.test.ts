@@ -115,4 +115,28 @@ describe('变卦与"变卦六亲按本卦宫"易错点', () => {
     // 变卦初爻 子(水)，按【本卦乾宫金】→ 我生 → 子孙（若误按变卦夬之坤宫土则应为妻财）
     expect(res.bianYaos?.[0].liuqin).toBe('子孙');
   });
+
+  it('兑为泽 初、二爻动（老阳）→ 变卦泽地萃；变卦爻阴阳必须随之翻转', () => {
+    // 回归：变卦阴阳须取变卦自身（动爻翻转），不可照抄本卦。
+    // 旧 bug：初九/九二 老阳动，变卦初六/六二 仍被画成阳爻，导致「变卦没变」。
+    const yaos: Yao[] = yaosFromPattern('110110').map((y, i) =>
+      i <= 1 ? { ...y, value: 9, state: 'laoyang', yinyang: 'yang', isDong: true } : y,
+    );
+    const res = getLiuYaoInfo(yaos, '甲辰');
+    expect(res.bianGua?.name).toBe('泽地萃');
+    expect(res.bianGua?.pattern).toBe('000110');
+    // 初/二爻由老阳变阴 → 变卦必须是 yin
+    expect(res.bianYaos?.map((y) => y.yinyang)).toEqual([
+      'yin', 'yin', 'yin', 'yang', 'yang', 'yin',
+    ]);
+    // 变卦阴阳序列与变卦 pattern 始终一致（防呆总断言）
+    expect(res.bianYaos?.map((y) => (y.yinyang === 'yang' ? '1' : '0')).join('')).toBe(
+      res.bianGua!.pattern,
+    );
+    // 泽地萃为兑宫二世卦 → 六二为世、九五为应
+    expect(res.bianYaos?.[1].isShi).toBe(true);
+    expect(res.bianYaos?.[4].isYing).toBe(true);
+    // 变卦六亲仍按本卦兑宫金：初爻 未(土) 生金 → 父母
+    expect(res.bianYaos?.[0].liuqin).toBe('父母');
+  });
 });

@@ -160,7 +160,7 @@ export function getLiuYaoInfo(yaos: Yao[], riGanZhi: string): LiuYaoResult {
   if (hasDong) {
     bianGua = findGuaByPattern(bianPattern(yaos));
     // 关键：变卦六亲仍按【本卦卦宫】五行判定（README §4.5 易错点）
-    let bian = markShiYing(cloneYaos(yaos), bianGua);
+    let bian = markShiYing(toBianYaos(yaos, bianGua), bianGua);
     bian = assignNaJia(bian, bianGua, benGua.palaceWuxing);
     bian = assignLiuShen(bian, riGan);
     bian = markKongWang(bian, riGanZhi);
@@ -177,9 +177,17 @@ export function getLiuYaoInfo(yaos: Yao[], riGanZhi: string): LiuYaoResult {
   };
 }
 
-function cloneYaos(yaos: Yao[]): Yao[] {
-  // 变卦的"爻"仍沿用本卦六爻的动静/阴阳作为载体，仅用于装配展示
-  return yaos.map((y) => ({ ...y }));
+/**
+ * 构造变卦的六爻载体。
+ * - 阴阳一律取【变卦自身】的爻（`bianGua.pattern[i]`：动爻翻转、静爻不变），
+ *   不可照抄本卦阴阳——否则"老阳动"的爻在变卦里仍画成阳爻，变卦看起来与本卦一模一样。
+ * - 保留 isDong / value，用于在变卦栏标出"此爻由动而变"（○=老阳变阴、×=老阴变阳）。
+ */
+function toBianYaos(yaos: Yao[], bianGua: Gua): Yao[] {
+  return yaos.map((y, i) => ({
+    ...y,
+    yinyang: (bianGua.pattern[i] === '1' ? 'yang' : 'yin') as YinYang,
+  }));
 }
 
 /** 便捷：起卦 + 排盘一站式 */
