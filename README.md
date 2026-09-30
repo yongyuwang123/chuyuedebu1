@@ -72,7 +72,7 @@
 | 动画 | @vueuse/motion / Framer Motion | 铜钱翻转、爻线生成 | "结合 Motion 打造沉浸式交互，铜钱摇落微动画" |
 | 音效 | Web Audio API / howler.js | 铜钱碰撞声、出卦提示音 | "Web Audio API 实现音效反馈，仪式感拉满"（推荐直接合成"哗啦"声，零素材依赖） |
 | 测试 | Vitest ⭐ | 排盘算法单测（世爻/纳甲/六亲断言） | "为纳甲/六亲算法写 50+ Vitest 单测，确保 100% 符合《卜筮正宗》" |
-| 部署 | Vercel + GitHub Actions | 推送即测即部署 | "GitHub Actions CI/CD 自动跑测试并部署 Vercel" |
+| 部署 | Vercel（连 Gitee 自动部署） | push 即构建上线 | "Vercel 直接连 Gitee 仓库，零点击自动部署静态站" |
 
 > ⚠️ **音效自动播放防坑**：iOS/Chrome 在用户首次交互前 `AudioContext` 处于 `suspended`，第一下摇卦可能无声。必须在用户点击"摇卦"按钮的瞬间初始化并 `resume()` AudioContext——这也契合六爻"心动起卦"的交互（点击即唤醒声音）。
 
@@ -357,22 +357,26 @@ npm run build    # vite build → dist/（lunar-javascript 拆为独立异步 ch
 ```
 > 注：日干支与节气月建均由 `lunar-javascript` 精确计算（已安装为依赖）；若运行时加载失败，自动回退内置公式（日干支精确、月建为节气近似表）。
 
-## 十一、部署（Gitee Pages + Gitee Go 自动部署）
-仓库：`git@gitee.com:yongyuwang/chuyuedeliuyao.git`（分支 `master` 源码 / `pages` 静态产物）。
-- **`base: './'`**：因 Gitee Pages 项目页地址带仓库名子路径（`https://yongyuwang.gitee.io/chuyuedeliuyao/`），必须用相对路径 base，否则 `/assets` 404。
+## 十一、部署（Vercel 自动部署）
 
-**Gitee Go 流水线（push 即自动构建+部署）**
-1. 仓库「DevOps → Gitee Go」开启，绑定本仓库与根目录 `Jenkinsfile`。
-2. **配置保密变量**：在 Gitee Go 流水线设置里加 Secret 变量 `GITEE_TOKEN` = 你的 Gitee 私人令牌（`https://gitee.com/profile/personal_access_tokens`，scope 勾 `projects`，用于回推 `pages` 分支）。
-3. 构建节点选 **Node.js ≥ 18**（推荐 20）。
-4. 之后 push `master` 自动跑：`npm install → npm test（22 项）→ npm run build → 推送 dist 到 pages 分支`。
+仓库：`git@gitee.com:yongyuwang/chuyuedeliuyao.git`（分支 `master` 源码）。
 
-> ⚠️ **Gitee Pages 免费版硬限制（务必知悉）**：推完 `pages` 分支后，Gitee Pages **不会自动重新部署**，仍需到「设置 → Pages」**手动点一次「更新」**才生效（Gitee 免费 Pages 不支持 API 触发重建，会报「非付费 pages，不允许部署」）。`Jenkinsfile` 末段「发布到 Gitee Pages」阶段已尝试调用其构建 API——若你开通了**付费 Pages** 则会自动触发、零点击；免费版该步会优雅失败并提示手动点更新，不影响前面构建与推送。
->
-> 想要**真正零点击**自动上线？两条路：① 升级 Gitee 付费 Pages（保留全 Gitee 工作流）；② 把代码镜像到 GitHub 再接 **Vercel**（Vercel 在 push 后自动部署，属行业标配）。
+**为什么用 Vercel**：纯前端静态站，Vercel 对 Vite 项目零配置识别，push 即自动构建+上线，免费且无需实名。它支持直接连 **Gitee 仓库**，因此**无需把代码搬到 GitHub**。
+
+**一键部署步骤**
+1. 打开 https://vercel.com → 注册/登录（GitHub 或邮箱均可）。
+2. 点 **「Add New → Project」→ Import**，在 Git 源里选 **Gitee**（首次需授权，允许读取仓库）。
+3. 选中 `yongyuwang/chuyuedeliuyao` 仓库。
+4. Framework Preset 选 **Vite**（一般自动识别）；Build Command `npm run build`、Output Directory `dist` 默认即可（仓库根 `vercel.json` 已固化）。
+5. 点 **Deploy**，约 1 分钟给出 `https://<项目名>.vercel.app` 域名。
+
+**之后的自动更新**：每次 `git push master` 到 Gitee，Vercel 自动重新构建部署（Production + Preview），真正零点击。
+
+- `vite.config.ts` 的 `base: './'` 对 Vercel 根域名同样兼容，无需改动。
+- 自定义域名：Vercel 控制台 → Settings → Domains 可绑定（国内稳定访问需备案域名）。
 
 - 隐私：纯前端、数据不出本地，见 `PRIVACY.md`。
 
 ---
 
-> 文档版本：v2.6（接入 Gitee Go 自动部署流水线：测试→构建→推送 pages 分支；注明 Gitee Pages 免费版需手动点「更新」的硬限制）｜ 状态：实现版
+> 文档版本：v2.7（部署方案由 Gitee Go 改为 Vercel：连 Gitee 仓库零点击自动部署；删除废弃 Jenkinsfile）｜ 状态：实现版
